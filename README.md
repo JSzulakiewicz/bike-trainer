@@ -55,7 +55,6 @@ LCM1602	Arduino Uno
 Source file is located in Firmware directory.
 You will also need additional LCD library, which you can download from:
 https://bitbucket.org/fmalpartida/new-liquidcrystal/downloads/
-
 Downloaded archieve should be extracted into: 
 C:\Users\<USERNAME>\Documents\Arduino\libraries
 
