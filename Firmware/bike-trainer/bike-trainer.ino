@@ -1,8 +1,15 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+extern int buttonState;
 
 //Pins define:
 const int sensorPin = 2;
 const int ledPin =  LED_BUILTIN;
 
+const int NumberOfSamples = 50;
+
+extern LiquidCrystal_I2C lcd;
 
 
 //BlinkingLed:
@@ -16,41 +23,50 @@ void LedChange()
 }
 
 
-//LCD over IIS setup:
-#include <Wire.h>
-#include <LiquidCrystal_I2C.h>
 
-LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);  
-void SetupLcd()
+
+unsigned long delays[NumberOfSamples];
+
+void shiftDelays()
 {
-  lcd.begin(16,2);   // Inicjalizacja LCD 2x16
-  lcd.backlight(); // zalaczenie podwietlenia 
-  lcd.setCursor(0,0); // Ustawienie kursora w pozycji 0,0 (pierwszy wiersz, pierwsza kolumna)
-  lcd.print("Hello, world!");
-  delay(500);
-  lcd.setCursor(0,1); //Ustawienie kursora w pozycji 0,0 (drugi wiersz, pierwsza kolumna)
-  lcd.print("BOTLAND.com.pl");
+  for(int i=NumberOfSamples-2; i>0; i--)
+    delays[i+1]=delays[i];  
 }
 
-
-// variables will change:
-int buttonState = 0;         // variable for reading the pushbutton status
-
-void setup() {
-  pinMode(ledPin, OUTPUT);
-  pinMode(sensorPin, INPUT_PULLUP);
-  SetupLcd();
+unsigned long sum (unsigned long * arrayOfSamples)
+{
+  unsigned long value =0;
+  for (int i=0;i<NumberOfSamples;i++) value += arrayOfSamples[i];
+  return value;
 }
 
+unsigned long average(unsigned long * arrayOfSamples)
+{
+  return sum(arrayOfSamples) / NumberOfSamples;
+}
+
+unsigned int revCounter = 0;
 
 void loop() {
-  // read the state of the pushbutton value:
-  buttonState = digitalRead(sensorPin);
-
-  // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
-  if (buttonState == LOW) {
+  
+  if (digitalRead(sensorPin) == LOW) {
+    revCounter++;
     LedChange();
+    shiftDelays();
+    delays[0] = millis() - delays[1];
+    
+    lcd.setCursor(0,0); 
+    lcd.print(delays[0]);
+    lcd.print("   AVG: ");
+    lcd.print(average(delays));
 
-    delay(200);
+    
+    lcd.setCursor(0,1); 
+    lcd.print("   REVs: ");
+    lcd.print(revCounter);
+    
+        
+
+    delay(50); //prevents contact sparks
   }
 }
